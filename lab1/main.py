@@ -5,13 +5,9 @@ import time
 import tkinter as tk
 from tkinter import Canvas
 import numpy as np
-# lerp = np.interp
-# matmul = np.matmul
-# add =  np.+operator
-# norm2 = np.linalg.norm
+import copy
 
-
-class WindowHuindow:
+class TKWindow:
     def __init__(self) -> None:
         pass
         self.window = tk.Tk()
@@ -22,7 +18,7 @@ class WindowHuindow:
         self.canvas.place(x=0, y=0)
 
         self.width = 800
-        self.height = 800
+        self.height = 600
 
         self.coords = []
         self.projCoords = np.array([[]])
@@ -43,9 +39,9 @@ class WindowHuindow:
         self.translationZ = 0
 
         # scale params for all axis
-        self.scaleX = 600
-        self.scaleY = 600
-        self.scaleZ = 600
+        self.scaleX = 1
+        self.scaleY = 1
+        self.scaleZ = 1
 
         # rotation params for all axis
         self.angleX = 0
@@ -61,8 +57,8 @@ class WindowHuindow:
         x = event.x
         y = event.y
         self.setPixel(x, y)
-        normX = x / self.width - 0.5
-        normY = y / self.height - 0.5
+        normX = x
+        normY = y 
         normZ = random.uniform(-0.2, 0.2)
 
         self.coords.append(
@@ -79,7 +75,7 @@ class WindowHuindow:
 
             self.angleX += 0.15
 
-        if event.char == "y":
+        if event.char == "c":
 
             self.angleY += 0.15
 
@@ -111,8 +107,6 @@ class WindowHuindow:
         self.projCoords = []
 
     def convertCoords(self, x, y):
-        x += 400
-        y += 400
         return np.array([x, y, 0])
 
     def connectProjectedDots(self, startNum, endNum):
@@ -144,9 +138,9 @@ class WindowHuindow:
         ])
 
         self.rotationY = np.array([
-            [cos(angleY), 0, sin(angleY)],
+            [cos(angleY), 0, -sin(angleY)],
             [0, 1, 0],
-            [-sin(angleY), 0, cos(angleY)]
+            [sin(angleY), 0, cos(angleY)]
         ])
 
     def updateProjection(self):
@@ -164,7 +158,7 @@ class WindowHuindow:
         self.clearScreen()
         self.updateRotation()
         self.updateProjection()
-
+        print(self.coords)
         self.projCoords = []
         centerVec = np.array([0, 0, 0], dtype=np.float64)
 
@@ -172,26 +166,21 @@ class WindowHuindow:
             centerVec += vec
 
         centerVec /= len(self.coords)
-
-        # transform all coords
-        for proj2D in self.coords:
-            transObject = np.array([
+        transObject = np.array([
                 self.translationX,
                 self.translationY,
                 self.translationZ,
             ])
-
+        coords2 = copy.deepcopy(self.coords)
+        self.projection = self.rotationX @ self.rotationY @ self.rotationZ @ self.projection    
+        # transform all coords
+        for proj2D in coords2:
+        
             proj2D -= centerVec
-            proj2D = proj2D @ self.rotationX
-            proj2D = proj2D @ self.rotationY
-            proj2D = proj2D @ self.rotationY
-            proj2D += centerVec
-
-            proj2D = proj2D @ self.projection
+            proj2D = self.projection @ proj2D
+            proj2D += centerVec            
             proj2D += transObject
-
             self.projCoords.append(proj2D)
-
         for i in range(len(self.projCoords) - 1):
             self.connectProjectedDots(i, i + 1)
 
@@ -204,4 +193,4 @@ class WindowHuindow:
             time.sleep(0.01)
 
 
-WindowHuindow()
+TKWindow()
