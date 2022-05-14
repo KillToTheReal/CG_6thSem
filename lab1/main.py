@@ -158,7 +158,6 @@ class TKWindow:
         self.clearScreen()
         self.updateRotation()
         self.updateProjection()
-        print(self.coords)
         self.projCoords = []
         centerVec = np.array([0, 0, 0], dtype=np.float64)
 
@@ -190,7 +189,7 @@ class TKWindow:
             if len(self.coords) > 0:
                 self.displayCoords()
             self.canvas.update()
-            time.sleep(0.01)
+            time.sleep(0.02)
 
 
 TKWindow()
