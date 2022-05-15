@@ -6,13 +6,14 @@ from tkinter import Canvas
 import numpy as np
 import copy
 
+
 class TKWindow:
     def __init__(self) -> None:
         self.window = tk.Tk()
         self.window.geometry('800x600')
         self.canv = Canvas(self.window, width=800, height=600)
         self.canv.bind("<Button 1>", self.addPoint)
-        self.canv.place(x=0,y=0)
+        self.canv.place(x=0, y=0)
         self.dots = []
         self.update()
 
@@ -20,54 +21,60 @@ class TKWindow:
         self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
 
     def placeDot(self, x, y):
-        self.canv.create_rectangle((x,y)*2)
+        self.canv.create_rectangle((x, y)*2)
 
-    def addPoint(self,event):
-        self.placeDot(event.x,event.y)
-        self.dots.append(np.array([event.x,event.y]))
+    def addPoint(self, event):
+        self.placeDot(event.x, event.y)
+        self.dots.append(np.array([event.x, event.y]))
         self.drawBezier()
 
     def showDots(self):
         for i in self.dots:
-            self.placeDot(i[0],i[1])
+            self.placeDot(i[0], i[1])
 
-    def myCpy(self, arr):
-        mcoords = arr[:]
-        myqueue = np.array([0,0])
-        np.append(myqueue, mcoords[0:1][0])
-        for i in range (len(mcoords)-1):
-            myqueue = np.append(myqueue, mcoords[i:i+1][0])
-            myqueue = np.append(myqueue, mcoords[i:i+1][0])
-        myqueue = np.append(myqueue,mcoords[len(mcoords)-1:][0])
-        return myqueue
+    def duplicate(self, queue):
+        coords = queue[:]
+        new_queue = []
+        new_queue.append(coords[0])
+        for i in range(1, len(coords)-1):
+            item = coords[i]
+            new_queue.append(item)
+            new_queue.append(item)
+
+        new_queue.append(coords[-1])
+
+        return new_queue
+
+    def lepr(self, v1, v2, t):
+        difference = (v2 - v1) * t + v1
+        return difference
 
     def drawBezier(self):
-        if(len(self.dots) >= 3): 
-            pts = []
+        if(len(self.dots) >= 3):
+            points = []
             step = 0.01
-            for i in np.arange(0.01,1,step):
-                cpy = copy.deepcopy(self.dots)
-                np.roll(cpy, -1)
+            for t in np.arange(0.01, 1+step, step):
+                queue = self.dots[:]
 
-                while (len(cpy)) !=1:
-                    cpy = self.myCpy(cpy)
-                    for j in range(0,len(cpy)):
-                        p1 = cpy[0]
-                        np.delete(cpy,0)
-                        p2 = cpy[1]
-                        np.delete(cpy,0)
-                        p = np.interp(p1,p2,i)
-                        cpy = np.append(p)
+                while len(queue) != 1:
+                    queue = self.duplicate(queue)
+                    for j in range(len(queue)-1):
+                        p1 = queue.pop(0)
+                        p2 = queue.pop(0)
+                        p = self.lepr(p1, p2, t)
+                        queue.append(p)
 
-            for i in range (len(pts)-1):
-                v1 = pts[i]
-                v2 = pts[i+1]
-                self.drawLine(v1[0],v1[1],v2[0],v2[1],clr='red',wd=2)
-                
-            for i in range (len(cpy)-1):
-                v1 = cpy[i]
-                v2 = cpy[i+1]
-                self.drawLine(v1[0],v1[1],v2[0],v2[1])
+                points.append(queue[0])
+
+            for t in range(len(points)-1):
+                v1 = points[t]
+                v2 = points[t+1]
+                self.drawLine(v1[0], v1[1], v2[0], v2[1], clr='red', wd=2)
+
+            for t in range(len(queue)-1):
+                v1 = queue[t]
+                v2 = queue[t+1]
+                self.drawLine(v1[0], v1[1], v2[0], v2[1])
 
     def clearScreen(self):
         self.canv.delete("all")
