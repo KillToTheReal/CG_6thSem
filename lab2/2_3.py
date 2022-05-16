@@ -60,10 +60,10 @@ class TKWindow:
 
             degree = 2
             degreeFac = math.factorial(degree)
-            for j in np.arange(1,len(controlPoints)-degree,degree):
-                for t in np.arange(delta,1,delta):
+            for j in range(1,len(controlPoints)-degree,degree):
+                for t in np.arange(0.01,1,delta):
                     point = np.array([0,0],dtype=np.float64)
-                    for i in range(degree):
+                    for i in range(degree+1):
                         vec = np.array([controlPoints[j+i][0],controlPoints[j+i][1]])
                         factor = degreeFac / (math.factorial(i) * math.factorial(degree-i))
                         pw = (1.0 - t)**(degree-i)
