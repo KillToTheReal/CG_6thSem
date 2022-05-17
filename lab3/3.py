@@ -25,7 +25,7 @@ class TKWindow:
         if event.char == 's' and self.degree > 2:
             self.degree-=1   
 
-    def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
+    def drawLine(self, x1, y1, x2, y2, clr="black", wd=2):
         self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
 
     def placeDot(self, x, y):
