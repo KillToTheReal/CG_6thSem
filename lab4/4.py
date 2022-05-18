@@ -97,7 +97,8 @@ class TKWindow:
                 [0.5, 0.5, 0.5], #6
                 [-0.5, 0.5, 0.5], #7
                 #new coord
-                [0.,0.,0.]] #8
+                [0.2,0.1,0.2],#8
+                [-0.2,-0.1,0.2]] #9
         for item in coords:
             self.originalCoords.append(np.array([item[0],item[1],item[2]])) 
 
@@ -106,7 +107,7 @@ class TKWindow:
                         [4, 5],[5, 6],[6, 7],[7, 4],
                         [0, 4],[1, 5],[2, 6],[3, 7],
                         #Невыпуклость
-                        [0, 8],[8, 1]
+                        [0, 8],[8, 9],[9, 1]
                                 ]
         self.travIndexes = travIndexes
 
@@ -212,6 +213,6 @@ class TKWindow:
             self.clearScreen()
             if len(self.originalCoords) > 0:
                 self.displayCoords()
-            time.sleep(0.02) 
+            time.sleep(0.03) 
 
 TKWindow()        
