@@ -212,6 +212,6 @@ class TKWindow:
             self.clearScreen()
             if len(self.originalCoords) > 0:
                 self.displayCoords()
-            time.sleep(0.03) 
+            time.sleep(0.02) 
 
 TKWindow()        
