@@ -9,7 +9,7 @@ class TKWindow:
     def __init__(self) -> None:
         self.window = tk.Tk()
         self.window.geometry('1000x1000')
-        self.canv = Canvas(self.window, width=800, height=600)
+        self.canv = Canvas(self.window, width=1000, height=1000)
         self.canv.bind("<Button 1>", self.addPoint)
         self.window.bind("<Key>",self.deger)
         self.canv.place(x=0,y=0)
