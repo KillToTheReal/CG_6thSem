@@ -16,8 +16,8 @@ class TKWindow:
         self.canv.place(x=0,y=0)
 
         self.originalCoords = []
-        self.transCoords = []
         self.projCoords = []
+        self.transCoords = []
         self.travIndexes = []
 
         self.angleX = 0
