@@ -5,40 +5,44 @@ import tkinter as tk
 from tkinter import Canvas
 from tkinter import ttk
 import numpy as np
-#SPLINE
+# SPLINE
+
+
 class TKWindow:
-    def __init__(self) -> None:    
+    def __init__(self) -> None:
         self.window = tk.Tk()
-        self.window.geometry('1000x1000')
         #self.window.bind("<Key>", self.rotator)
-        self.canv = Canvas(self.window, width=1000, height=1000)
-        self.canv.place(x=0,y=0)
+        self.width = 500
+        self.height = 500
+        self.window.geometry(f'{self.width}x{self.height}')
+        self.canv = Canvas(self.window, width=self.width, height=self.height)
+        self.canv.place(x=0, y=0)
 
         self.originalCoords = []
         self.projCoords = []
 
-        self.projection = np.zeros((3,3))
+        self.projection = np.zeros((3, 3))
 
-        self.rotationX = np.zeros((3,3))
-        self.rotationY = np.zeros((3,3))      
-        self.rotationZ = np.zeros((3,3))
+        self.rotationX = np.zeros((3, 3))
+        self.rotationY = np.zeros((3, 3))
+        self.rotationZ = np.zeros((3, 3))
 
         self.angleX = 0
         self.angleY = 0
-        self.angleZ = 0 
+        self.angleZ = 0
 
-        self.scaleX = 200
-        self.scaleY = 200 
-        self.scaleZ = 200
+        self.scaleX = 100
+        self.scaleY = 100
+        self.scaleZ = 100
         self.maxScale = 400
 
-        self.traslation = np.zeros((1,3))
+        self.traslation = np.zeros((1, 3))
         self.translationX = 0
-        self.translationY = 0        
+        self.translationY = 0
         self.translationZ = 0
 
         self.surfaceW = 3
-        self.surfaceH = 3 
+        self.surfaceH = 3
         self.surfaceStepX = 0.2
         self.surfaceStepY = 0.2
         self.surfaceInitialShiftX = 0
@@ -54,25 +58,24 @@ class TKWindow:
         self.addCoordsManually()
         self.update()
 
-
     def addCoordsManually(self):
-        for _ in range (0, math.ceil(self.surfaceH / self.surfaceStepY)):
+        for _ in range(0, math.ceil(self.surfaceH / self.surfaceStepY)):
             self.gridCoords.append([])
 
         precision = 0.001
-        #Control points
+        # Control points
         j = 0
         for y in np.arange(self.surfaceInitialShiftY, self.surfaceH-precision, self.surfaceStepY):
             for x in np.arange(self.surfaceInitialShiftX, self.surfaceW-precision, self.surfaceStepX):
                 coordX = x
                 coordY = y
-                coordZ = (random.uniform(0.0, 1.0))
-                surfacePoint = np.array([coordX,coordY,coordZ])
+                coordZ = random.uniform(0.0, 1.0)
+                surfacePoint = np.array([coordX, coordY, coordZ])
                 self.originalCoords.append(surfacePoint)
-                self.gridCoords[j].append(surfacePoint)                           
+                self.gridCoords[j].append(surfacePoint)
             j = j+1
 
-        parts = 40
+        parts = 70
         step = 1/parts
         for i in range(parts):
             self.gridSurfaceCoords.append([])
@@ -80,39 +83,39 @@ class TKWindow:
         deg = self.degree
         knots = []
         n = len(self.gridCoords)
-        len1 =n+deg+1
-            
+        len1 = n+deg+1
+
         for i in range(len1):
-            if i<=deg:
+            if i <= deg:
                 knots.append(0)
-            elif i<len1-deg-1:
+            elif i < len1-deg-1:
                 knots.append(i/len1)
             else:
                 knots.append(1)
-        self.knots = knots            
+        self.knots = knots
         N = len(self.gridCoords)
         M = len(self.gridCoords[0])
         u = 0
         for i in range(parts):
-            v=0
+            v = 0
             for j in range(parts):
-                surfacePoint = self.splinePoint(u,v,M,N)
+                surfacePoint = self.splinePoint(u, v, M, N)
                 self.gridSurfaceCoords[i].append(surfacePoint)
-                v+=1
-            u+=1
+                v += step
+            u += step
 
-    def splinePoint(self,u,v,m,n):
-        surfacePoint = np.array([0,0,0],dtype=np.float64)
+    def splinePoint(self, u, v, m, n):
+        surfacePoint = np.array([0, 0, 0], dtype=np.float64)
         for i in range(n):
             N_i = self.N(i, self.degree, u)
             for j in range(m):
                 N_j = self.N(j, self.degree, v)
                 controlPoint = self.gridCoords[i][j]
-                controlPoint = np.array([controlPoint[0],controlPoint[1],controlPoint[2]])
-                controlPoint*= (N_i * N_j)
-                surfacePoint+=controlPoint
-        return surfacePoint        
-
+                controlPoint = np.array(
+                    [controlPoint[0], controlPoint[1], controlPoint[2]])
+                controlPoint *= (N_i * N_j)
+                surfacePoint += controlPoint
+        return surfacePoint
 
     def N(self, i, m, u):
         if m == 0:
@@ -137,13 +140,13 @@ class TKWindow:
         else:
             part2 = (self.knots[i+m+1]-u) / (self.knots[i+m+1]-self.knots[i+1])
 
-        return part1 * self.N(i, m-1, u) + part2 * self.N(i+1, m-1, u)   
+        return part1 * self.N(i, m-1, u) + part2 * self.N(i+1, m-1, u)
 
     def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
         self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
 
-    def placeDot(self, x, y,size=0):
-        self.canv.create_rectangle((x,y),(x+size,y+size))
+    def placeDot(self, x, y, size=0):
+        self.canv.create_rectangle((x, y), (x+size, y+size))
 
     def surfaceFunction(x, y):
         return math.sin(2*y) + math.sin(2*x)
@@ -156,22 +159,22 @@ class TKWindow:
         self.updateRotation()
         self.updateProjection()
         self.projCoords = []
-        centerVec = np.array([0,0,0],dtype=np.float64)
-        for i in range (len(self.originalCoords)):
+        centerVec = np.array([0, 0, 0], dtype=np.float64)
+        for i in range(len(self.originalCoords)):
             vec = self.originalCoords[i]
-            centerVec+=vec
-        centerVec*= (1/len(self.originalCoords))
+            centerVec += vec
+        centerVec *= (1/len(self.originalCoords))
 
-        
         projectedGridCoords = []
-        for i in range (len(self.gridSurfaceCoords)):
+        for i in range(len(self.gridSurfaceCoords)):
             projectedGridCoords.append([])
 
         for i in range(len(self.gridCoords)):
             for j in range(len(self.gridCoords[0])):
                 coord = self.gridCoords[i][j]
-                proj2D = np.array([coord[0],coord[1],coord[2]]) 
-                objTrans = np.array([self.translationX,self.translationY,self.translationZ])
+                proj2D = np.array([coord[0], coord[1], coord[2]])
+                objTrans = np.array(
+                    [self.translationX, self.translationY, self.translationZ])
                 proj2D += (centerVec*-1)
                 proj2D = proj2D @ self.rotationX
                 proj2D = proj2D @ self.rotationY
@@ -180,15 +183,17 @@ class TKWindow:
                 proj2D = proj2D @ self.projection
                 proj2D += objTrans
                 self.projCoords.append(proj2D)
-                convertedCoords = np.array(self.convertCoords(proj2D[0],proj2D[1]))
-                self.placeDot(convertedCoords[0],convertedCoords[1],1)
-        
+                convertedCoords = np.array(
+                    self.convertCoords(proj2D[0], proj2D[1]))
+                self.placeDot(convertedCoords[0], convertedCoords[1], 1)
+
         for i in range(len(self.gridSurfaceCoords)):
             for j in range(len(self.gridSurfaceCoords[0])):
                 coord = self.gridSurfaceCoords[i][j]
 
-                proj2D = np.array([coord[0],coord[1],coord[2]]) 
-                objTrans = np.array([self.translationX,self.translationY,self.translationZ])
+                proj2D = np.array([coord[0], coord[1], coord[2]])
+                objTrans = np.array(
+                    [self.translationX, self.translationY, self.translationZ])
                 proj2D += (centerVec*-1)
                 proj2D = proj2D @ self.rotationX
                 proj2D = proj2D @ self.rotationY
@@ -197,30 +202,33 @@ class TKWindow:
                 proj2D = proj2D @ self.projection
                 proj2D += objTrans
                 self.projCoords.append(proj2D)
-                convertedCoords = np.array(self.convertCoords(proj2D[0],proj2D[1]))
-                self.placeDot(convertedCoords[0],convertedCoords[1],8)
+                convertedCoords = np.array(
+                    self.convertCoords(proj2D[0], proj2D[1]))
+                self.placeDot(convertedCoords[0], convertedCoords[1], 1)
                 projectedGridCoords[i].append(convertedCoords)
 
-        def relu(x,max): return 0 if x >= max else x 
+        def relu(x, max): return 0 if x >= max else x
 
-        for i in range(1,len(self.gridSurfaceCoords)-1):
+        for i in range(1, len(self.gridSurfaceCoords)-1):
             for j in range(len(self.gridSurfaceCoords[0])):
                 start = projectedGridCoords[i][j]
-                end = projectedGridCoords[relu(i+1,len(self.gridSurfaceCoords))][j]
-                self.drawLine(start[0],start[1],end[0],end[1])
+                end = projectedGridCoords[relu(
+                    i+1, len(self.gridSurfaceCoords))][j]
+                self.drawLine(start[0], start[1], end[0], end[1])
 
-                end = projectedGridCoords[i][relu(j+1,len(self.gridSurfaceCoords[0]))]
-                self.drawLine(start[0],start[1],end[0],end[1])
+                end = projectedGridCoords[i][relu(
+                    j+1, len(self.gridSurfaceCoords[0]))]
+                self.drawLine(start[0], start[1], end[0], end[1])
 
-        projectedGridCoords =[]
+        projectedGridCoords = []
         self.angleX += 0.001
-        self.angleY +=0.05
+        self.angleY += 0.05
         self.angleZ += 0.001
 
-    def convertCoords(self,x,y):
-        x+=500
-        y+=500
-        return np.array([x,y,0])
+    def convertCoords(self, x, y):
+        x += 0
+        y += 0
+        return np.array([x, y, 0])
 
     def updateRotation(self):
         angleX = self.angleX
@@ -259,13 +267,13 @@ class TKWindow:
             np.array([0, 0, 1]) * scaleZ,
         ])
 
-
     def update(self):
         while(True):
             self.window.update()
             self.clearScreen()
             if len(self.originalCoords) > 0:
                 self.displayCoords()
-            time.sleep(0.03) 
+            time.sleep(0.03)
 
-TKWindow()   
+
+TKWindow()
