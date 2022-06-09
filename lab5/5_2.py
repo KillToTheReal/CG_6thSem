@@ -1,5 +1,6 @@
 import math
 import time
+import random
 import tkinter as tk
 from tkinter import Canvas
 from tkinter import ttk
@@ -26,9 +27,9 @@ class TKWindow:
         self.angleY = 0
         self.angleZ = 0 
 
-        self.scaleX =   100
-        self.scaleY = 100  
-        self.scaleZ = 100
+        self.scaleX = 200
+        self.scaleY = 200 
+        self.scaleZ = 200
         self.maxScale = 400
 
         self.traslation = np.zeros((1,3))
@@ -36,59 +37,78 @@ class TKWindow:
         self.translationY = 0        
         self.translationZ = 0
 
-        self.surfaceW = 2 * math.pi
-        self.surfaceH = 2 * math.pi
+        self.surfaceW = 2
+        self.surfaceH = 2 
         self.surfaceStepX = 0.2
         self.surfaceStepY = 0.2
         self.surfaceInitialShiftX = 0
         self.surfaceInitialShiftY = 0
 
         self.gridCoords = []
+        self.gridSurfaceCoords = []
+        # Bspline
+        self.knots = []
+        self.degree = 2
+        self.precision = 0.01
+
         self.addCoordsManually()
         self.update()
+
 
     def addCoordsManually(self):
         for _ in range (0, math.ceil(self.surfaceH / self.surfaceStepY)):
             self.gridCoords.append([])
 
-        for x in np.arange(self.surfaceInitialShiftX, self.surfaceW, self.surfaceStepX):
+        precision = 0.001
+        
+        for y in np.arange(self.surfaceInitialShiftY, self.surfaceH-precision, self.surfaceStepY):
             j = 0
-            for y in np.arange(self.surfaceInitialShiftY, self.surfaceH, self.surfaceStepY):
-                coordX = self.fx(x,y)
-                coordY = self.fy(x,y)
-                coordZ = self.fz(x,y)
+            for x in np.arange(self.surfaceInitialShiftX, self.surfaceW-precision, self.surfaceStepX):
+                coordX = x
+                coordY = y
+                coordZ = (random.uniform(0.0, 3.0))
                 surfacePoint = np.array([coordX,coordY,coordZ])
                 self.originalCoords.append(surfacePoint)
                 self.gridCoords[j].append(surfacePoint)                           
                 j = j+1
+        parts = 30
+        step = 1/parts
+        for i in range(parts):
+            self.gridSurfaceCoords.append([])
+
+        N = len(self.gridCoords)
+        M = len(self.gridCoords[0]) 
+        u = 0
+        for i in range(parts):
+            v = 0
+            for j in range(parts):
+                surfacePoint = self.bezierPoint(u,v,M,N)
+                self.gridSurfaceCoords[i].append(surfacePoint)
+                v+=step
+            u+=step
+
+    def bezierPoint(self,u,v,m,n):
+        surfacePoint = np.array([0,0,0],dtype=np.float64)
+        for i in range(n):
+            B_i = self.B(n-1,i,u) 
+            for j in range(m):
+                B_j = self.B(m-1,j,v)
+                controlPoint = self.gridCoords[i][j]
+                controlPoint = np.array([controlPoint[0],controlPoint[1],controlPoint[2]])
+                controlPoint *= B_i * B_j
+                surfacePoint+=controlPoint
+        return surfacePoint            
+
+    def B(self,n,i,t):
+        factor = math.factorial(n) / (math.factorial(i)*math.factorial(n-i))
+        power = (1-t)**(n-i)
+        power_t = t**i
+        B = factor * power * power_t
+        return B
 
     def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
         self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
 
-    # def fx(self, u, v):
-    #     R = 0.5
-    #     r = 0.2
-    #     return (R + r*math.cos(v))* math.cos(u)
-    # def fy(self, u, v):
-    #     R = 0.5
-    #     r = 0.2
-    #     return ((R + r*math.cos(v)) * math.sin(u))
-    # def fz(self, u, v):
-    #     R = 0.5
-    #     r = 0.2
-    #     return (r*math.sin(v))
-
-    #Cylinder
-    def fx(self, u, v):
-        a = 2
-        return (a*math.cos(u))
-    def fy(self, u, v):
-        a = 2
-        return (a*math.sin(u))
-    def fz(self, u, v):      
-        return (v)        
-
-    
     def placeDot(self, x, y):
         self.canv.create_rectangle((x,y)*2)
 
@@ -109,17 +129,32 @@ class TKWindow:
             centerVec+=vec
         centerVec*= (1/len(self.originalCoords))
 
-        i = 0
+        
         projectedGridCoords = []
-        for i in range (len(self.gridCoords)):
+        for i in range (len(self.gridSurfaceCoords)):
             projectedGridCoords.append([])
 
         for i in range(len(self.gridCoords)):
             for j in range(len(self.gridCoords[0])):
                 coord = self.gridCoords[i][j]
-                proj2D = np.array([coord[0],coord[1],coord[2]])
+                proj2D = np.array([coord[0],coord[1],coord[2]]) 
+                objTrans = np.array([self.translationX,self.translationY,self.translationZ])
+                proj2D += (centerVec*-1)
+                proj2D = proj2D @ self.rotationX
+                proj2D = proj2D @ self.rotationY
+                proj2D = proj2D @ self.rotationZ
+                proj2D += centerVec
+                proj2D = proj2D @ self.projection
+                proj2D += objTrans
+                self.projCoords.append(proj2D)
+                convertedCoords = np.array(self.convertCoords(proj2D[0],proj2D[1]))
+                self.placeDot(convertedCoords[0],convertedCoords[1])
+        
+        for i in range(len(self.gridSurfaceCoords)):
+            for j in range(len(self.gridSurfaceCoords[0])):
+                coord = self.gridSurfaceCoords[i][j]
 
-                #trans = np.array([self.translationX,self.translationY,self.translationZ])
+                proj2D = np.array([coord[0],coord[1],coord[2]]) 
                 objTrans = np.array([self.translationX,self.translationY,self.translationZ])
                 proj2D += (centerVec*-1)
                 proj2D = proj2D @ self.rotationX
@@ -132,16 +167,16 @@ class TKWindow:
                 convertedCoords = np.array(self.convertCoords(proj2D[0],proj2D[1]))
                 self.placeDot(convertedCoords[0],convertedCoords[1])
                 projectedGridCoords[i].append(convertedCoords)
-        
+
         def relu(x,max): return 0 if x >= max else x 
 
-        for i in range(len(self.gridCoords)):
-            for j in range(len(self.gridCoords[0])):
+        for i in range(1,len(self.gridSurfaceCoords)-1):
+            for j in range(len(self.gridSurfaceCoords[0])):
                 start = projectedGridCoords[i][j]
-                end = projectedGridCoords[relu(i+1,len(self.gridCoords))][j]
+                end = projectedGridCoords[relu(i+1,len(self.gridSurfaceCoords))][j]
                 self.drawLine(start[0],start[1],end[0],end[1])
 
-                end = projectedGridCoords[i][relu(j+1,len(self.gridCoords[0]))]
+                end = projectedGridCoords[i][relu(j+1,len(self.gridSurfaceCoords[0]))]
                 self.drawLine(start[0],start[1],end[0],end[1])
 
         projectedGridCoords =[]
