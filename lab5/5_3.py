@@ -5,12 +5,11 @@ import tkinter as tk
 from tkinter import Canvas
 from tkinter import ttk
 import numpy as np
-#SPLINE
+#BEZIER
 class TKWindow:
     def __init__(self) -> None:    
         self.window = tk.Tk()
         self.window.geometry('1000x1000')
-        #self.window.bind("<Key>", self.rotator)
         self.canv = Canvas(self.window, width=1000, height=1000)
         self.canv.place(x=0,y=0)
 
@@ -23,7 +22,7 @@ class TKWindow:
         self.rotationY = np.zeros((3,3))      
         self.rotationZ = np.zeros((3,3))
 
-        self.angleX = 0
+        self.angleX = 90
         self.angleY = 0
         self.angleZ = 0 
 
@@ -37,8 +36,8 @@ class TKWindow:
         self.translationY = 0        
         self.translationZ = 0
 
-        self.surfaceW = 3
-        self.surfaceH = 3 
+        self.surfaceW = 2
+        self.surfaceH = 2 
         self.surfaceStepX = 0.2
         self.surfaceStepY = 0.2
         self.surfaceInitialShiftX = 0
@@ -60,90 +59,57 @@ class TKWindow:
             self.gridCoords.append([])
 
         precision = 0.001
-        #Control points
-        j = 0
+        
         for y in np.arange(self.surfaceInitialShiftY, self.surfaceH-precision, self.surfaceStepY):
+            j = 0
             for x in np.arange(self.surfaceInitialShiftX, self.surfaceW-precision, self.surfaceStepX):
                 coordX = x
                 coordY = y
-                coordZ = (random.uniform(0.0, 1.0))
+                coordZ = (random.uniform(0.0, 3.0))
                 surfacePoint = np.array([coordX,coordY,coordZ])
                 self.originalCoords.append(surfacePoint)
                 self.gridCoords[j].append(surfacePoint)                           
-            j = j+1
-
-        parts = 40
+                j = j+1
+        parts = 30
         step = 1/parts
         for i in range(parts):
             self.gridSurfaceCoords.append([])
 
-        deg = self.degree
-        knots = []
-        n = len(self.gridCoords)
-        len1 =n+deg+1
-            
-        for i in range(len1):
-            if i<=deg:
-                knots.append(0)
-            elif i<len1-deg-1:
-                knots.append(i/len1)
-            else:
-                knots.append(1)
-        self.knots = knots            
         N = len(self.gridCoords)
-        M = len(self.gridCoords[0])
+        M = len(self.gridCoords[0]) 
         u = 0
         for i in range(parts):
-            v=0
+            v = 0
             for j in range(parts):
-                surfacePoint = self.splinePoint(u,v,M,N)
+                surfacePoint = self.bezierPoint(u,v,M,N)
                 self.gridSurfaceCoords[i].append(surfacePoint)
-                v+=1
-            u+=1
+                v+=step
+            u+=step
 
-    def splinePoint(self,u,v,m,n):
+    def bezierPoint(self,u,v,m,n):
         surfacePoint = np.array([0,0,0],dtype=np.float64)
         for i in range(n):
-            N_i = self.N(i, self.degree, u)
+            B_i = self.B(n-1,i,u) 
             for j in range(m):
-                N_j = self.N(j, self.degree, v)
+                B_j = self.B(m-1,j,v)
                 controlPoint = self.gridCoords[i][j]
                 controlPoint = np.array([controlPoint[0],controlPoint[1],controlPoint[2]])
-                controlPoint*= (N_i * N_j)
+                controlPoint *= B_i * B_j
                 surfacePoint+=controlPoint
-        return surfacePoint        
+        return surfacePoint            
 
-
-    def N(self, i, m, u):
-        if m == 0:
-            if self.knots[i] <= u and u <= self.knots[i+1]:
-                return 1
-            return 0
-        part1 = 0
-        part2 = 0
-        if self.knots[i+m] == self.knots[i]:
-            if u == self.knots[i]:
-                part1 = 0
-            else:
-                part1 = 1
-        else:
-            part1 = (u - self.knots[i]) / (self.knots[i+m]-self.knots[i])
-
-        if self.knots[i + m + 1] == self.knots[i+1]:
-            if self.knots[i+m+1] == u:
-                part2 = 0
-            else:
-                part2 = 1
-        else:
-            part2 = (self.knots[i+m+1]-u) / (self.knots[i+m+1]-self.knots[i+1])
-
-        return part1 * self.N(i, m-1, u) + part2 * self.N(i+1, m-1, u)   
+    def B(self,n,i,t):
+        factor = math.factorial(n) / (math.factorial(i)*math.factorial(n-i))
+        power = (1-t)**(n-i)
+        power_t = t**i
+        B = factor * power * power_t
+        return B
 
     def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
         self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
 
-    def placeDot(self, x, y,size=0):
-        self.canv.create_rectangle((x,y),(x+size,y+size))
+    def placeDot(self, x, y):
+        self.canv.create_rectangle((x,y)*2)
 
     def surfaceFunction(x, y):
         return math.sin(2*y) + math.sin(2*x)
@@ -181,7 +147,7 @@ class TKWindow:
                 proj2D += objTrans
                 self.projCoords.append(proj2D)
                 convertedCoords = np.array(self.convertCoords(proj2D[0],proj2D[1]))
-                self.placeDot(convertedCoords[0],convertedCoords[1],1)
+                self.placeDot(convertedCoords[0],convertedCoords[1])
         
         for i in range(len(self.gridSurfaceCoords)):
             for j in range(len(self.gridSurfaceCoords[0])):
@@ -198,7 +164,7 @@ class TKWindow:
                 proj2D += objTrans
                 self.projCoords.append(proj2D)
                 convertedCoords = np.array(self.convertCoords(proj2D[0],proj2D[1]))
-                self.placeDot(convertedCoords[0],convertedCoords[1],8)
+                self.placeDot(convertedCoords[0],convertedCoords[1])
                 projectedGridCoords[i].append(convertedCoords)
 
         def relu(x,max): return 0 if x >= max else x 
