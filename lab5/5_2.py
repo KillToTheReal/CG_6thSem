@@ -30,9 +30,9 @@ class TKWindow:
         self.angleY = 0
         self.angleZ = 0
 
-        self.scaleX = 100
-        self.scaleY = 100
-        self.scaleZ = 100
+        self.scaleX = 200
+        self.scaleY = 200
+        self.scaleZ = 200
         self.maxScale = 400
 
         self.traslation = np.zeros((1, 3))
@@ -272,7 +272,7 @@ class TKWindow:
             self.clearScreen()
             if len(self.originalCoords) > 0:
                 self.displayCoords()
-            time.sleep(0.08)
+            time.sleep(0.1)
 
 
 TKWindow()
