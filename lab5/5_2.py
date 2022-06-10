@@ -11,9 +11,8 @@ import numpy as np
 class TKWindow:
     def __init__(self) -> None:
         self.window = tk.Tk()
-        #self.window.bind("<Key>", self.rotator)
-        self.width = 500
-        self.height = 500
+        self.width = 800
+        self.height = 800
         self.window.geometry(f'{self.width}x{self.height}')
         self.canv = Canvas(self.window, width=self.width, height=self.height)
         self.canv.place(x=0, y=0)
@@ -75,7 +74,7 @@ class TKWindow:
                 self.gridCoords[j].append(surfacePoint)
             j = j+1
 
-        parts = 70
+        parts = 40
         step = 1/parts
         for i in range(parts):
             self.gridSurfaceCoords.append([])
@@ -273,7 +272,7 @@ class TKWindow:
             self.clearScreen()
             if len(self.originalCoords) > 0:
                 self.displayCoords()
-            time.sleep(0.03)
+            time.sleep(0.08)
 
 
 TKWindow()
