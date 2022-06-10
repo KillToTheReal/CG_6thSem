@@ -9,8 +9,10 @@ import numpy as np
 class TKWindow:
     def __init__(self) -> None:    
         self.window = tk.Tk()
-        self.window.geometry('1000x1000')
-        self.canv = Canvas(self.window, width=1000, height=1000)
+        self.width = 1000 
+        self.height = 1000
+        self.window.geometry(f'{self.width}x{self.height}')
+        self.canv = Canvas(self.window, width=self.width, height=self.height)
         self.canv.place(x=0,y=0)
 
         self.originalCoords = []
@@ -105,18 +107,6 @@ class TKWindow:
         B = factor * power * power_t
         return B
 
-    def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
-        self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
-
-    def placeDot(self, x, y):
-        self.canv.create_rectangle((x,y)*2)
-
-    def surfaceFunction(x, y):
-        return math.sin(2*y) + math.sin(2*x)
-
-    def clearScreen(self):
-        self.canv.delete("all")
-
     def displayCoords(self):
         self.clearScreen()
         self.updateRotation()
@@ -155,6 +145,7 @@ class TKWindow:
 
                 proj2D = np.array([coord[0],coord[1],coord[2]]) 
                 objTrans = np.array([self.translationX,self.translationY,self.translationZ])
+
                 proj2D += (centerVec*-1)
                 proj2D = proj2D @ self.rotationX
                 proj2D = proj2D @ self.rotationY
@@ -169,24 +160,38 @@ class TKWindow:
 
         def relu(x,max): return 0 if x >= max else x 
 
-        for i in range(1,len(self.gridSurfaceCoords)-1):
+        for i in range(0,len(self.gridSurfaceCoords)-1):
             for j in range(len(self.gridSurfaceCoords[0])):
                 start = projectedGridCoords[i][j]
                 end = projectedGridCoords[relu(i+1,len(self.gridSurfaceCoords))][j]
                 self.drawLine(start[0],start[1],end[0],end[1])
 
+        for i in range(0,len(self.gridSurfaceCoords)):
+            for j in range(len(self.gridSurfaceCoords[0])-1):
+                start = projectedGridCoords[i][j]
                 end = projectedGridCoords[i][relu(j+1,len(self.gridSurfaceCoords[0]))]
                 self.drawLine(start[0],start[1],end[0],end[1])
 
         projectedGridCoords =[]
         self.angleX += 0.001
-        self.angleY +=0.05
+        self.angleY +=0.02
         self.angleZ += 0.001
 
-    def convertCoords(self,x,y):
-        x+=500
-        y+=500
-        return np.array([x,y,0])
+
+    def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
+        self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
+
+    def placeDot(self, x, y, size=0, color="black"):
+        self.canv.create_rectangle((x, y), (x+size, y+size), fill = color, outline=color)
+
+    def clearScreen(self):
+        self.canv.delete("all")
+
+    def convertCoords(self, x, y):
+        x += self.width / 4
+        y += self.height / 4
+        return np.array([x, y, 0])
+
 
     def updateRotation(self):
         angleX = self.angleX

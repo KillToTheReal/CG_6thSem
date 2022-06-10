@@ -9,13 +9,15 @@ import copy
 
 class TKWindow:
     def __init__(self) -> None:
-        pass
         self.window = tk.Tk()
-        self.window.geometry("800x600")
+        self.width = 1000 
+        self.height = 1000
+        self.window.geometry(f'{self.width}x{self.height}')
+        self.canvas = Canvas(self.window, width=self.width, height=self.height)
+        self.canvas.place(x=0, y=0)
         self.window.bind("<Key>", self.rotator)
         self.window.bind("<Button 1>", self.placeDot)
-        self.canvas = Canvas(self.window, width=800, height=600)
-        self.canvas.place(x=0, y=0)
+   
 
         self.width = 800
         self.height = 600
@@ -50,6 +52,36 @@ class TKWindow:
 
         self.update()
 
+
+    def displayCoords(self):
+        self.clearScreen()
+        self.updateRotation()
+        self.updateProjection()
+        self.projCoords = []
+        centerVec = np.array([0, 0, 0], dtype=np.float64)
+
+        for vec in self.coords:
+            centerVec += vec
+
+        centerVec /= len(self.coords)
+        transObject = np.array([
+                self.translationX,
+                self.translationY,
+                self.translationZ,
+            ])
+        coords2 = copy.deepcopy(self.coords)
+        self.projection = self.rotationX @ self.rotationY @ self.rotationZ @ self.projection    
+        # transform all coords
+        for proj2D in coords2:
+        
+            proj2D -= centerVec
+            proj2D = self.projection @ proj2D
+            proj2D += centerVec            
+            proj2D += transObject
+            self.projCoords.append(proj2D)
+        for i in range(len(self.projCoords) - 1):
+            self.connectProjectedDots(i, i + 1)    
+
     def setPixel(self, x, y):
         self.canvas.create_rectangle(x, y, x+2, y+2)
 
@@ -71,50 +103,32 @@ class TKWindow:
         self.canvas.delete("all")
 
     def rotator(self, event):
-        if event.char == "x":
-
+        if event.char == "x" or event.char == "ч":
             self.angleX += 0.15
-
-        if event.char == "c":
-
+        if event.char == "c" or event.char =="с":
             self.angleY += 0.15
-
-        if event.char == "z":
-
+        if event.char == "z" or event.char =="я":
             self.angleZ += 0.15
-
-        if event.char == "q":
-
+        if event.char == "q" or event.char =="й":
             self.translationX += 1
-
-        if event.char == "w":
+        if event.char == "w" or event.char =="ц":
             self.translationY += 1
-
-        if event.char == "e":
+        if event.char == "e" or event.char =="у":
             self.translationZ += 1
-
-        if event.char == "a":
+        if event.char == "a" or event.char =="ф":
             self.scaleX += 1
-
-        if event.char == "s":
+        if event.char == "s" or event.char =="ы":
             self.scaleY += 1
-
-        if event.char == "d":
+        if event.char == "d" or event.char =="в":
             self.scaleZ += 1
 
     def clearCoords(self):
         self.window.update()
         self.projCoords = []
 
-    def convertCoords(self, x, y):
-        return np.array([x, y, 0])
-
     def connectProjectedDots(self, startNum, endNum):
         end = self.projCoords[endNum]
         start = self.projCoords[startNum]
-        start = self.convertCoords(start[0], start[1])
-        end = self.convertCoords(end[0], end[1])
-
         self.drawLine(start[0], start[1], end[0], end[1])
 
     def updateRotation(self):
@@ -154,42 +168,11 @@ class TKWindow:
             np.array([0, 0, 1]) * scaleZ,
         ])
 
-    def displayCoords(self):
-        self.clearScreen()
-        self.updateRotation()
-        self.updateProjection()
-        self.projCoords = []
-        centerVec = np.array([0, 0, 0], dtype=np.float64)
-
-        for vec in self.coords:
-            centerVec += vec
-
-        centerVec /= len(self.coords)
-        transObject = np.array([
-                self.translationX,
-                self.translationY,
-                self.translationZ,
-            ])
-        coords2 = copy.deepcopy(self.coords)
-        self.projection = self.rotationX @ self.rotationY @ self.rotationZ @ self.projection    
-        # transform all coords
-        for proj2D in coords2:
-        
-            proj2D -= centerVec
-            proj2D = self.projection @ proj2D
-            proj2D += centerVec            
-            proj2D += transObject
-            self.projCoords.append(proj2D)
-        for i in range(len(self.projCoords) - 1):
-            self.connectProjectedDots(i, i + 1)
-
     def update(self):
-        self.window.update()
         while True:
+            self.window.update()
             if len(self.coords) > 0:
                 self.displayCoords()
-            self.canvas.update()
             time.sleep(0.02)
-
 
 TKWindow()

@@ -8,9 +8,10 @@ import numpy as np
 class TKWindow:
     def __init__(self) -> None:    
         self.window = tk.Tk()
-        self.window.geometry('1000x1000')
-        #self.window.bind("<Key>", self.rotator)
-        self.canv = Canvas(self.window, width=1000, height=1000)
+        self.width = 1000 
+        self.height = 1000
+        self.window.geometry(f'{self.width}x{self.height}')
+        self.canv = Canvas(self.window, width=self.width, height=self.height)
         self.canv.place(x=0,y=0)
 
         self.originalCoords = []
@@ -26,7 +27,7 @@ class TKWindow:
         self.angleY = 0
         self.angleZ = 0 
 
-        self.scaleX =   100
+        self.scaleX = 100
         self.scaleY = 100  
         self.scaleZ = 100
         self.maxScale = 400
@@ -62,22 +63,6 @@ class TKWindow:
                 self.gridCoords[j].append(surfacePoint)                           
                 j = j+1
 
-    def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
-        self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
-
-    # def fx(self, u, v):
-    #     R = 0.5
-    #     r = 0.2
-    #     return (R + r*math.cos(v))* math.cos(u)
-    # def fy(self, u, v):
-    #     R = 0.5
-    #     r = 0.2
-    #     return ((R + r*math.cos(v)) * math.sin(u))
-    # def fz(self, u, v):
-    #     R = 0.5
-    #     r = 0.2
-    #     return (r*math.sin(v))
-
     #Cylinder
     def fx(self, u, v):
         a = 2
@@ -87,16 +72,6 @@ class TKWindow:
         return (a*math.sin(u))
     def fz(self, u, v):      
         return (v)        
-
-    
-    def placeDot(self, x, y):
-        self.canv.create_rectangle((x,y)*2)
-
-    def surfaceFunction(x, y):
-        return math.sin(2*y) + math.sin(2*x)
-
-    def clearScreen(self):
-        self.canv.delete("all")
 
     def displayCoords(self):
         self.clearScreen()
@@ -118,8 +93,6 @@ class TKWindow:
             for j in range(len(self.gridCoords[0])):
                 coord = self.gridCoords[i][j]
                 proj2D = np.array([coord[0],coord[1],coord[2]])
-
-                #trans = np.array([self.translationX,self.translationY,self.translationZ])
                 objTrans = np.array([self.translationX,self.translationY,self.translationZ])
                 proj2D += (centerVec*-1)
                 proj2D = proj2D @ self.rotationX
@@ -149,11 +122,20 @@ class TKWindow:
         self.angleY +=0.05
         self.angleZ += 0.001
 
-    def convertCoords(self,x,y):
-        x+=500
-        y+=500
-        return np.array([x,y,0])
+    def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
+        self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
 
+    def placeDot(self, x, y, size=0, color="black"):
+        self.canv.create_rectangle((x, y), (x+size, y+size), fill = color, outline=color)
+
+    def clearScreen(self):
+        self.canv.delete("all")
+
+    def convertCoords(self, x, y):
+        x += self.width / 2
+        y += self.height / 2
+        return np.array([x, y, 0])
+    
     def updateRotation(self):
         angleX = self.angleX
         angleY = self.angleY
@@ -191,11 +173,9 @@ class TKWindow:
             np.array([0, 0, 1]) * scaleZ,
         ])
 
-
     def update(self):
         while(True):
             self.window.update()
-            self.clearScreen()
             if len(self.originalCoords) > 0:
                 self.displayCoords()
             time.sleep(0.03) 

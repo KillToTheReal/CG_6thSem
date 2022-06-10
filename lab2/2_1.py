@@ -8,8 +8,10 @@ import copy
 class TKWindow:
     def __init__(self) -> None:
         self.window = tk.Tk()
-        self.window.geometry('800x600')
-        self.canv = Canvas(self.window, width=800, height=600)
+        self.width = 1000 
+        self.height = 1000
+        self.window.geometry(f'{self.width}x{self.height}')
+        self.canv = Canvas(self.window, width=self.width, height=self.height)
         self.canv.bind("<Button 1>", self.addPoint)
         self.canv.place(x=0,y=0)
         self.dots = []

@@ -8,8 +8,10 @@ import copy
 class TKWindow:
     def __init__(self) -> None:
         self.window = tk.Tk()
-        self.window.geometry('1000x1000')
-        self.canv = Canvas(self.window, width=1000, height=1000)
+        self.width = 1000 
+        self.height = 1000
+        self.window.geometry(f'{self.width}x{self.height}')
+        self.canv = Canvas(self.window, width=self.width, height=self.height)
         self.canv.bind("<Button 1>", self.addPoint)
         self.window.bind("<Key>", self.deger)
         self.canv.place(x=0, y=0)
@@ -19,30 +21,11 @@ class TKWindow:
         self.step_size = 0.01
         self.update()
 
-    def deger(self, event):
-        if event.char == 'w':
-            self.degree += 1
-        if event.char == 's' and self.degree > 2:
-            self.degree -= 1
-
-    def drawLine(self, x1, y1, x2, y2, clr="black", wd=2):
-        self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
-
-    def placeDot(self, x, y):
-        self.canv.create_rectangle((x, y)*2)
-
-    def addPoint(self, event):
-        self.placeDot(event.x, event.y)
-        self.dots.append(np.array([event.x, event.y], dtype=np.float64))
-
-    def showDots(self):
-        for i in self.dots:
-            self.placeDot(i[0], i[1])
-
     def clearScreen(self):
         self.canv.delete("all")
 
     def drawSpline(self):
+        self.clearScreen()
         step_size = self.step_size
         points = []
         controlPoints = []
@@ -76,14 +59,22 @@ class TKWindow:
                 vec += scale_point
             points.append(vec)
             u += step_size
+        
+        for i in range(len(self.dots)-1):
+            #Ломаная
+            v1 = self.dots[i]
+            v2= self.dots[i+1]
+            self.drawLine(v1[0], v1[1], v2[0], v2[1],"red")
 
         for i in range(len(points)-1):
+            #Кривая
             v1 = points[i]
             v2 = points[i+1]
-            self.drawLine(v1[0], v1[1], v2[0], v2[1])
+            self.drawLine(v1[0], v1[1], v2[0], v2[1],wd=2)
 
         self.drawLine(points[len(points)-1][0], points[len(points)-1][1],
                       self.dots[len(self.dots)-1][0], self.dots[len(self.dots)-1][1])
+
 
     def N(self, i, m, u):
         if m == 0:
@@ -110,6 +101,29 @@ class TKWindow:
 
         return part1 * self.N(i, m-1, u) + part2 * self.N(i+1, m-1, u)
 
+    def deger(self, event):
+        if event.char == 'w':
+            self.degree += 1
+        if event.char == 's' and self.degree > 2:
+            self.degree -= 1
+
+    def showDots(self):
+        for i in self.dots:
+            self.placeDot(i[0], i[1])
+
+    def addPoint(self, event):
+        self.placeDot(event.x, event.y)
+        self.dots.append(np.array([event.x, event.y], dtype=np.float64))
+
+    def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
+        self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
+
+    def placeDot(self, x, y, size=0, color="black"):
+        self.canv.create_rectangle((x, y), (x+size, y+size), fill = color, outline=color)
+
+    def clearScreen(self):
+        self.canv.delete("all")
+
     def labeler(self):
         mystr = "Degree:" + str(self.degree) + \
             ". Points amount:" + str(len(self.dots))
@@ -118,7 +132,6 @@ class TKWindow:
     def update(self):
         while(True):
             self.window.update()
-            self.clearScreen()
             self.showDots()
             self.labeler()
             if(len(self.dots) > 2):

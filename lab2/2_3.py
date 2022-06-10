@@ -8,28 +8,15 @@ import copy
 class TKWindow:
     def __init__(self) -> None:
         self.window = tk.Tk()
-        self.window.geometry('800x600')
-        self.canv = Canvas(self.window, width=800, height=600)
+        self.width = 1000 
+        self.height = 1000
+        self.window.geometry(f'{self.width}x{self.height}')
+        self.canv = Canvas(self.window, width=self.width, height=self.height)
         self.canv.bind("<Button 1>", self.addPoint)
         self.canv.place(x=0,y=0)
         self.part = True
         self.dots = []
         self.update()
-
-    def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
-        self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
-
-    def placeDot(self, x, y):
-        self.canv.create_rectangle((x,y)*2)
-
-    def addPoint(self,event):
-        self.placeDot(event.x,event.y)
-        self.dots.append(np.array([event.x,event.y],dtype=np.float64))
-        self.drawBezier()
-
-    def showDots(self):
-        for i in self.dots:
-            self.placeDot(i[0],i[1])
 
     def sw(self):
         if self.part:
@@ -45,7 +32,7 @@ class TKWindow:
             if self.part:
                 newContrPoints = []
                 cntrllen = len(controlPoints)
-                for i in range (cntrllen ):
+                for i in range (cntrllen):
                     newContrPoints.append(controlPoints[i])
                     if i < cntrllen - 1:
                         point_1 = controlPoints[i]
@@ -61,7 +48,7 @@ class TKWindow:
             degree = 2
             degreeFac = math.factorial(degree)
             for j in range(1,len(controlPoints)-degree,degree):
-                for t in np.arange(0.01,1,delta):
+                for t in np.arange(0.01,1+delta,delta):
                     point = np.array([0,0],dtype=np.float64)
                     for i in range(degree+1):
                         vec = np.array([controlPoints[j+i][0],controlPoints[j+i][1]])
@@ -79,8 +66,22 @@ class TKWindow:
                 v2 = points[i+1]
                 self.drawLine(v1[0],v1[1],v2[0],v2[1])
                 
+    def addPoint(self,event):
+        self.placeDot(event.x,event.y)
+        self.dots.append(np.array([event.x,event.y],dtype=np.float64))
+
+    def showDots(self):
+        for i in self.dots:
+            self.placeDot(i[0],i[1])
+    
+    def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
+        self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
+
+    def placeDot(self, x, y, size=0, color="black"):
+        self.canv.create_rectangle((x, y), (x+size, y+size), fill = color, outline=color)
+
     def clearScreen(self):
-        self.canv.delete("all")
+        self.canv.delete("all")            
 
     def update(self):
         while(True):

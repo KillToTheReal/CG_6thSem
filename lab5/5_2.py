@@ -11,8 +11,8 @@ import numpy as np
 class TKWindow:
     def __init__(self) -> None:
         self.window = tk.Tk()
-        self.width = 800
-        self.height = 800
+        self.width = 1000 
+        self.height = 1000
         self.window.geometry(f'{self.width}x{self.height}')
         self.canv = Canvas(self.window, width=self.width, height=self.height)
         self.canv.place(x=0, y=0)
@@ -92,6 +92,7 @@ class TKWindow:
             else:
                 knots.append(1)
         self.knots = knots
+        
         N = len(self.gridCoords)
         M = len(self.gridCoords[0])
         u = 0
@@ -110,8 +111,7 @@ class TKWindow:
             for j in range(m):
                 N_j = self.N(j, self.degree, v)
                 controlPoint = self.gridCoords[i][j]
-                controlPoint = np.array(
-                    [controlPoint[0], controlPoint[1], controlPoint[2]])
+                controlPoint = np.array([controlPoint[0], controlPoint[1], controlPoint[2]])
                 controlPoint *= (N_i * N_j)
                 surfacePoint += controlPoint
         return surfacePoint
@@ -140,18 +140,6 @@ class TKWindow:
             part2 = (self.knots[i+m+1]-u) / (self.knots[i+m+1]-self.knots[i+1])
 
         return part1 * self.N(i, m-1, u) + part2 * self.N(i+1, m-1, u)
-
-    def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
-        self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
-
-    def placeDot(self, x, y, size=0):
-        self.canv.create_rectangle((x, y), (x+size, y+size))
-
-    def surfaceFunction(x, y):
-        return math.sin(2*y) + math.sin(2*x)
-
-    def clearScreen(self):
-        self.canv.delete("all")
 
     def displayCoords(self):
         self.clearScreen()
@@ -184,7 +172,7 @@ class TKWindow:
                 self.projCoords.append(proj2D)
                 convertedCoords = np.array(
                     self.convertCoords(proj2D[0], proj2D[1]))
-                self.placeDot(convertedCoords[0], convertedCoords[1], 1)
+                self.placeDot(convertedCoords[0], convertedCoords[1], 1, "red")
 
         for i in range(len(self.gridSurfaceCoords)):
             for j in range(len(self.gridSurfaceCoords[0])):
@@ -203,20 +191,20 @@ class TKWindow:
                 self.projCoords.append(proj2D)
                 convertedCoords = np.array(
                     self.convertCoords(proj2D[0], proj2D[1]))
-                self.placeDot(convertedCoords[0], convertedCoords[1], 1)
+                self.placeDot(convertedCoords[0], convertedCoords[1], 1, "black")
                 projectedGridCoords[i].append(convertedCoords)
 
         def relu(x, max): return 0 if x >= max else x
 
-        for i in range(1, len(self.gridSurfaceCoords)-1):
+        for i in range(0, len(self.gridSurfaceCoords)-1):
             for j in range(len(self.gridSurfaceCoords[0])):
                 start = projectedGridCoords[i][j]
-                end = projectedGridCoords[relu(
-                    i+1, len(self.gridSurfaceCoords))][j]
+                end = projectedGridCoords[relu(i+1, len(self.gridSurfaceCoords))][j]
                 self.drawLine(start[0], start[1], end[0], end[1])
-
-                end = projectedGridCoords[i][relu(
-                    j+1, len(self.gridSurfaceCoords[0]))]
+        for i in range(0, len(self.gridSurfaceCoords)):
+            for j in range(len(self.gridSurfaceCoords[0])-1):
+                start = projectedGridCoords[i][j]
+                end = projectedGridCoords[i][relu( j+1, len(self.gridSurfaceCoords[0]))]
                 self.drawLine(start[0], start[1], end[0], end[1])
 
         projectedGridCoords = []
@@ -224,9 +212,18 @@ class TKWindow:
         self.angleY += 0.05
         self.angleZ += 0.001
 
+    def drawLine(self, x1, y1, x2, y2, clr="black", wd=1):
+        self.canv.create_line(x1, y1, x2, y2, fill=clr, width=wd)
+
+    def placeDot(self, x, y, size=0, color="black"):
+        self.canv.create_rectangle((x, y), (x+size, y+size), fill = color, outline=color)
+
+    def clearScreen(self):
+        self.canv.delete("all")
+
     def convertCoords(self, x, y):
-        x += 0
-        y += 0
+        x += self.width / 4
+        y += self.height / 4
         return np.array([x, y, 0])
 
     def updateRotation(self):
@@ -272,7 +269,7 @@ class TKWindow:
             self.clearScreen()
             if len(self.originalCoords) > 0:
                 self.displayCoords()
-            time.sleep(0.1)
+            time.sleep(0.05)
 
 
 TKWindow()
